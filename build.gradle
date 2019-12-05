@@ -1,22 +1,13 @@
 buildscript {
     repositories {
         jcenter()
-        maven { url "https://artifactory.smartling.net/artifactory/repo" }
-    }
-    dependencies {
-        classpath 'com.smartling.gradle.plugins:sl-maven-upload:20160602.10.g5800337'
-        classpath 'com.smartling.gradle.plugins:sl-encrypted-credentials:20160602.10.g5800337'
     }
 }
 
 plugins {
     id 'java'
-    id "org.unbroken-dome.test-sets" version "2.1.1"
-    id 'com.palantir.git-version' version '0.11.0'
 }
 
-apply plugin: 'com.smartling.sl-encrypted-credentials'
-apply plugin: 'com.smartling.sl-maven-upload'
 apply plugin: 'java'
 apply plugin: 'jacoco'
 
@@ -26,7 +17,7 @@ repositories {
 
 description = 'Hubspot SDK'
 group = 'com.smartling.connector'
-version = gitVersion()
+version = '4.2.0'
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
@@ -51,49 +42,3 @@ dependencies {
     testCompileOnly "org.projectlombok:lombok:1.18.8"
     testAnnotationProcessor "org.projectlombok:lombok:1.18.8"
 }
-
-test {
-    testLogging.showStandardStreams = true
-
-    // set heap size for the test JVM(s)
-    minHeapSize = '512m'
-    maxHeapSize = '1024m'
-
-    // Uncomment the following jvmArgs line if you want to use a debugger during tests. It will stop execution on failure, and let you connect.
-    // NOTE: Make sure to put the comment back before you commit!!!
-    //jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=5005'
-
-    outputs.upToDateWhen { false }
-}
-
-// workaround to start tests job with passed system properties
-tasks.withType(Test) {
-    systemProperties = System.properties
-}
-
-testSets {
-    integrationTest {}
-}
-
-// TODO enable int tests when we have long-term working sandbox env
-//check.dependsOn integrationTest
-
-task setCredentials {
-    doLast {
-        project.ext.set('mavenCredentials', [
-            'smartling.repository.source.local-overwritable-releases':
-                    [
-                            'username': 'connectors-ci',
-                            'password': "$System.env.ci_pass_releases" //uses jenkins keystore, passed through pipeline using 'withCredentials'
-                    ],
-
-            'smartling.repository.target.snapshots':
-                    [
-                            'username': 'continuous_integration',
-                            'password': "$System.env.ci_pass" //uses jenkins keystore, passed through pipeline using 'withCredentials'
-                    ]
-        ])
-    }
-}
-
-uploadArchives.dependsOn setCredentials
